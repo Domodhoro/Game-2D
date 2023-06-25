@@ -39,7 +39,7 @@ function stone:draw(window, shader, texture)
 end
 
 function stone:destroy()
-    engine.destroy_mesh(self.mesh)
+    engine.delete_mesh(self.mesh)
 end
 
 function create_stones()

@@ -6,9 +6,9 @@ function text:create(font, message)
     setmetatable(o, {__index = text})
 
     o.mesh = engine.create_mesh()
-    o.text = engine.new_text   (font, message)
+    o.text = engine.create_text(font, message)
 
-    engine.set_scale   (o.mesh, 1.0, 0.5)
+    engine.set_scale   (o.mesh, 1.0, 0.25)
     engine.set_rotate  (o.mesh, 0.0)
     engine.set_position(o.mesh, -0.75, 0.5, -0.1)
 

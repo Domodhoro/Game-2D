@@ -6,13 +6,14 @@ function script()
     local window = engine.create_window("Game", 800, 500, "./img/icon.bmp")
 
     if window then
-        local font    = engine.load_font    ("./cmunrm.ttf")
-        local text    = text:create         (font, "Hello, world!")
-        local texture = engine.load_texture ("./img/stone.bmp")
-        local stones  = create_stones       ()
-        local player  = player:create       ()
-        local shader  = engine.create_shader("./glsl/vertex_shader.glsl", "./glsl/fragment_shader.glsl")
-        local FPS     = 60
+        local framebuffer = engine.create_framebuffer(window)
+        local font        = engine.load_font         ("./cmunrm.ttf")
+        local text        = text:create              (font, "Hello, world!")
+        local texture     = engine.load_texture      ("./img/stone.bmp")
+        local stones      = create_stones            ()
+        local player      = player:create            ()
+        local shader      = engine.create_shader     ("./glsl/vertex_shader.glsl", "./glsl/fragment_shader.glsl")
+        local FPS         = 60
 
         player:set_scale          (0.25, 0.25)
         player:set_position       (0.0, 0.0, 0.0)
@@ -44,9 +45,10 @@ function script()
 
         destroy_stones(stones)
 
-        engine.delete_font   (font)
-        engine.delete_texture(text)
-        engine.destroy_shader(shader)
-        engine.destroy_window(window)
+        engine.delete_font       (font)
+        engine.delete_texture    (text)
+        engine.delete_shader     (shader)
+        engine.delete_framebuffer(framebuffer)
+        engine.delete_window     (window)
     end
 end

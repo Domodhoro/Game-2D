@@ -89,5 +89,5 @@ end
 
 function player:kill()
     engine.delete_texture(self.texture)
-    engine.destroy_mesh  (self.mesh)
+    engine.delete_mesh   (self.mesh)
 end

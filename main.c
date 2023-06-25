@@ -1,21 +1,26 @@
-#define GLEW_STATIC
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_TRUETYPE_IMPLEMENTATION
-#define FNL_IMPL
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <memory.h>
 #include <time.h>
 #include <math.h>
+
+#define GLEW_STATIC
 #include <GL/glew.h>
+
 #include <GLFW/glfw3.h>
+
 #include "./lua54/lua.h"
 #include "./lua54/lualib.h"
 #include "./lua54/lauxlib.h"
+
+#define STB_IMAGE_IMPLEMENTATION
 #include "./stb/stb_image.h"
+
+#define STB_TRUETYPE_IMPLEMENTATION
 #include "./stb/stb_truetype.h"
+
+#define FNL_IMPL
 #include "./FastNoiseLite/FastNoiseLite.h"
 
 typedef struct {
@@ -23,6 +28,12 @@ typedef struct {
     GLint       width;
     GLint       height;
 } Window;
+
+typedef struct {
+    GLuint FBO;
+    GLuint texture_color_buffer;
+    GLuint RBO;
+} Framebuffer;
 
 typedef struct {
     GLfloat v[2];
@@ -50,30 +61,32 @@ typedef struct {
 } Mesh;
 
 static int create_window          (lua_State*);
-static int destroy_window         (lua_State*);
+static int delete_window          (lua_State*);
 static int window_should_close    (lua_State*);
 static int swap_buffers           (lua_State*);
 static int clear_color            (lua_State*);
 static int poll_events            (lua_State*);
 static int delay                  (lua_State*);
+static int create_framebuffer     (lua_State*);
+static int delete_framebuffer     (lua_State*);
 static int get_key                (lua_State*);
 static int create_shader          (lua_State*);
-static int destroy_shader         (lua_State*);
+static int delete_shader          (lua_State*);
 static int load_font              (lua_State*);
 static int delete_font            (lua_State*);
-static int new_text               (lua_State*);
+static int create_text            (lua_State*);
 static int load_texture           (lua_State*);
 static int delete_texture         (lua_State*);
 static int create_mesh            (lua_State*);
-static int destroy_mesh           (lua_State*);
+static int delete_mesh            (lua_State*);
 static int draw                   (lua_State*);
 static int set_position           (lua_State*);
 static int set_scale              (lua_State*);
 static int set_rotate             (lua_State*);
 static int create_noise           (lua_State*);
 static int get_noise              (lua_State*);
-static int destroy_noise          (lua_State*);
-int        engine                 (lua_State*);
+static int delete_noise           (lua_State*);
+static int engine                 (lua_State*);
 GLvoid     set_window_icon        (GLFWwindow*, const char*);
 char*      read_file              (const char*);
 GLuint     compile_vertex_shader  (const GLchar*);
@@ -169,7 +182,7 @@ static int create_window(lua_State* L) {
     }
 }
 
-static int destroy_window(lua_State* L) {
+static int delete_window(lua_State* L) {
     Window* window = lua_touserdata(L, 1);
 
     if (window->window != NULL) {
@@ -241,6 +254,54 @@ static int get_key(lua_State* L) {
     return 0;
 }
 
+static int create_framebuffer(lua_State* L) {
+    Window*      window      = lua_touserdata(L, 1);
+    Framebuffer* framebuffer = malloc        (sizeof(Framebuffer));
+
+    if (framebuffer != NULL) {
+        glGenFramebuffers(1, &(framebuffer->FBO));
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->FBO);
+
+        glGenTextures         (1, &(framebuffer->texture_color_buffer));
+        glBindTexture         (GL_TEXTURE_2D, framebuffer->texture_color_buffer);
+        glTexImage2D          (GL_TEXTURE_2D, 0, GL_RGB, window->width, window->height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri       (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri       (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer->texture_color_buffer, 0);
+
+        glGenRenderbuffers       (1, &(framebuffer->RBO));
+        glBindRenderbuffer       (GL_RENDERBUFFER, framebuffer->RBO);
+        glRenderbufferStorage    (GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window->width, window->height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, framebuffer->RBO);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            printf("Error (%s): Framebuffer is not complete.\n", __func__);
+        }
+
+        glBindFramebuffer    (GL_FRAMEBUFFER, 0);
+        lua_pushlightuserdata(L, framebuffer);
+
+        return 1;
+    } else {
+        printf("Error (%s): Failed to create framebuffer.\n", __func__);
+
+        return 0;
+    }
+}
+
+static int delete_framebuffer(lua_State* L) {
+    Framebuffer* framebuffer = lua_touserdata(L, 1);
+
+    if (framebuffer != NULL) {
+        glDeleteRenderbuffers(1, &(framebuffer->RBO));
+        glDeleteTextures     (1, &(framebuffer->texture_color_buffer));
+        glDeleteFramebuffers (1, &(framebuffer->FBO));
+        free                 (framebuffer);
+    }
+
+    return 0;
+}
+
 static int create_shader(lua_State* L) {
     const GLchar* vertex_path   = luaL_checkstring(L, 1);
     const GLchar* fragment_path = luaL_checkstring(L, 2);
@@ -266,7 +327,7 @@ static int create_shader(lua_State* L) {
     return 0;
 }
 
-static int destroy_shader(lua_State* L) {
+static int delete_shader(lua_State* L) {
     GLuint* shader = lua_touserdata(L, 1);
 
     if (shader != NULL) {
@@ -311,7 +372,7 @@ static int delete_font(lua_State* L) {
     return 0;
 }
 
-static int new_text(lua_State* L) {
+static int create_text(lua_State* L) {
     unsigned char* font = lua_touserdata  (L, 1);
     const char*    text = luaL_checkstring(L, 2);
 
@@ -453,7 +514,7 @@ static int create_mesh(lua_State* L) {
     return 0;
 }
 
-static int destroy_mesh(lua_State* L) {
+static int delete_mesh(lua_State* L) {
     Mesh* mesh = lua_touserdata(L, 1);
 
     if (mesh != NULL) {
@@ -574,7 +635,7 @@ static int get_noise(lua_State* L) {
     return 0;
 }
 
-static int destroy_noise(lua_State* L) {
+static int delete_noise(lua_State* L) {
     fnl_state* noise = lua_touserdata(L, 1);
 
     if (noise != NULL) free(noise);
@@ -582,32 +643,34 @@ static int destroy_noise(lua_State* L) {
     return 0;
 }
 
-int engine(lua_State* L) {
+static int engine(lua_State* L) {
     const luaL_Reg functions[] = {
         {"create_window",       create_window},
-        {"destroy_window",      destroy_window},
+        {"delete_window",       delete_window},
         {"window_should_close", window_should_close},
         {"clear_color",         clear_color},
         {"swap_buffers",        swap_buffers},
         {"poll_events",         poll_events},
         {"delay",               delay},
         {"get_key",             get_key},
+        {"create_framebuffer",  create_framebuffer},
+        {"delete_framebuffer",  delete_framebuffer},
         {"create_shader",       create_shader},
-        {"destroy_shader",      destroy_shader},
+        {"delete_shader",       delete_shader},
         {"load_font",           load_font},
         {"delete_font",         delete_font},
-        {"new_text",            new_text},
+        {"create_text",         create_text},
         {"load_texture",        load_texture},
         {"delete_texture",      delete_texture},
         {"create_mesh",         create_mesh},
-        {"destroy_mesh",        destroy_mesh},
+        {"delete_mesh",         delete_mesh},
         {"draw",                draw},
         {"set_position",        set_position},
         {"set_scale",           set_scale},
         {"set_rotate",          set_rotate},
         {"create_noise",        create_noise},
         {"get_noise",           get_noise},
-        {"destroy_noise",       destroy_noise},
+        {"delete_noise",        delete_noise},
 
         {NULL, NULL}
     };

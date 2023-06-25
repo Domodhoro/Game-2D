@@ -6,21 +6,18 @@
 #include <math.h>
 
 #define GLEW_STATIC
-#include <GL/glew.h>
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_TRUETYPE_IMPLEMENTATION
+#define FNL_IMPL
 
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include "./lua54/lua.h"
 #include "./lua54/lualib.h"
 #include "./lua54/lauxlib.h"
-
-#define STB_IMAGE_IMPLEMENTATION
 #include "./stb/stb_image.h"
-
-#define STB_TRUETYPE_IMPLEMENTATION
 #include "./stb/stb_truetype.h"
-
-#define FNL_IMPL
 #include "./FastNoiseLite/FastNoiseLite.h"
 
 typedef struct {
@@ -28,12 +25,6 @@ typedef struct {
     GLint       width;
     GLint       height;
 } Window;
-
-typedef struct {
-    GLuint FBO;
-    GLuint texture_color_buffer;
-    GLuint RBO;
-} Framebuffer;
 
 typedef struct {
     GLfloat v[2];
@@ -60,16 +51,23 @@ typedef struct {
     GLfloat angle_of_rotation;
 } Mesh;
 
+typedef struct {
+    GLuint FBO;
+    GLuint Texture;
+    GLuint RBO;
+} Framebuffer;
+
 static int create_window          (lua_State*);
 static int delete_window          (lua_State*);
 static int window_should_close    (lua_State*);
+static int set_window_should_close(lua_State*);
 static int swap_buffers           (lua_State*);
 static int clear_color            (lua_State*);
 static int poll_events            (lua_State*);
 static int delay                  (lua_State*);
+static int get_key                (lua_State*);
 static int create_framebuffer     (lua_State*);
 static int delete_framebuffer     (lua_State*);
-static int get_key                (lua_State*);
 static int create_shader          (lua_State*);
 static int delete_shader          (lua_State*);
 static int load_font              (lua_State*);
@@ -117,6 +115,9 @@ int main(int argc, char* argv[]) {
         lua_pushinteger(L, key);
         lua_setglobal  (L, constant_name);
     }
+
+    lua_pushinteger(L, GLFW_KEY_ESCAPE);
+    lua_setglobal  (L, "KEY_ESC");
 
     if (luaL_dofile(L, "./script.lua") == LUA_OK) {
         lua_getglobal(L, "script");
@@ -206,6 +207,14 @@ static int window_should_close(lua_State* L) {
     return 0;
 }
 
+static int set_window_should_close(lua_State* L) {
+    Window* window = lua_touserdata(L, 1);
+
+    if (window->window != NULL) glfwSetWindowShouldClose(window->window, true);
+
+    return 0;
+}
+
 static int clear_color(lua_State* L) {
     const GLclampf red   = (GLclampf)lua_tonumber(L, 1);
     const GLclampf green = (GLclampf)lua_tonumber(L, 2);
@@ -262,17 +271,17 @@ static int create_framebuffer(lua_State* L) {
         glGenFramebuffers(1, &(framebuffer->FBO));
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->FBO);
 
-        glGenTextures         (1, &(framebuffer->texture_color_buffer));
-        glBindTexture         (GL_TEXTURE_2D, framebuffer->texture_color_buffer);
+        glGenTextures         (1, &(framebuffer->Texture));
+        glBindTexture         (GL_TEXTURE_2D, framebuffer->Texture);
         glTexImage2D          (GL_TEXTURE_2D, 0, GL_RGB, window->width, window->height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri       (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri       (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer->texture_color_buffer, 0);
+        glTexParameteri       (GL_TEXTURE_2D,  GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri       (GL_TEXTURE_2D,  GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer->Texture, 0);
 
         glGenRenderbuffers       (1, &(framebuffer->RBO));
         glBindRenderbuffer       (GL_RENDERBUFFER, framebuffer->RBO);
         glRenderbufferStorage    (GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window->width, window->height);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, framebuffer->RBO);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER,  GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, framebuffer->RBO);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             printf("Error (%s): Framebuffer is not complete.\n", __func__);
@@ -294,7 +303,7 @@ static int delete_framebuffer(lua_State* L) {
 
     if (framebuffer != NULL) {
         glDeleteRenderbuffers(1, &(framebuffer->RBO));
-        glDeleteTextures     (1, &(framebuffer->texture_color_buffer));
+        glDeleteTextures     (1, &(framebuffer->Texture));
         glDeleteFramebuffers (1, &(framebuffer->FBO));
         free                 (framebuffer);
     }
@@ -374,7 +383,7 @@ static int delete_font(lua_State* L) {
 
 static int create_text(lua_State* L) {
     unsigned char* font = lua_touserdata  (L, 1);
-    const char*    text = luaL_checkstring(L, 2);
+    const char*    word = luaL_checkstring(L, 2);
 
     stbtt_fontinfo info;
 
@@ -384,7 +393,6 @@ static int create_text(lua_State* L) {
         const int      length    = 64;
         unsigned char* bitmap    = calloc                   (width * height, sizeof(unsigned char));
         const float    scale     = stbtt_ScaleForPixelHeight(&info, length);
-        const char*    word      = text;
         int            ascent    = 0;
         int            descent   = 0;
         int            line_gap  = 0;
@@ -437,7 +445,6 @@ static int create_text(lua_State* L) {
         }
 
         glTexImage2D         (GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, inverted_bitmap);
-        glGenerateMipmap     (GL_TEXTURE_2D);
         free                 (inverted_bitmap);
         free                 (bitmap);
         lua_pushlightuserdata(L, texture);
@@ -645,32 +652,33 @@ static int delete_noise(lua_State* L) {
 
 static int engine(lua_State* L) {
     const luaL_Reg functions[] = {
-        {"create_window",       create_window},
-        {"delete_window",       delete_window},
-        {"window_should_close", window_should_close},
-        {"clear_color",         clear_color},
-        {"swap_buffers",        swap_buffers},
-        {"poll_events",         poll_events},
-        {"delay",               delay},
-        {"get_key",             get_key},
-        {"create_framebuffer",  create_framebuffer},
-        {"delete_framebuffer",  delete_framebuffer},
-        {"create_shader",       create_shader},
-        {"delete_shader",       delete_shader},
-        {"load_font",           load_font},
-        {"delete_font",         delete_font},
-        {"create_text",         create_text},
-        {"load_texture",        load_texture},
-        {"delete_texture",      delete_texture},
-        {"create_mesh",         create_mesh},
-        {"delete_mesh",         delete_mesh},
-        {"draw",                draw},
-        {"set_position",        set_position},
-        {"set_scale",           set_scale},
-        {"set_rotate",          set_rotate},
-        {"create_noise",        create_noise},
-        {"get_noise",           get_noise},
-        {"delete_noise",        delete_noise},
+        {"create_window",           create_window},
+        {"delete_window",           delete_window},
+        {"window_should_close",     window_should_close},
+        {"set_window_should_close", set_window_should_close},
+        {"clear_color",             clear_color},
+        {"swap_buffers",            swap_buffers},
+        {"poll_events",             poll_events},
+        {"delay",                   delay},
+        {"get_key",                 get_key},
+        {"create_framebuffer",      create_framebuffer},
+        {"delete_framebuffer",      delete_framebuffer},
+        {"create_shader",           create_shader},
+        {"delete_shader",           delete_shader},
+        {"load_font",               load_font},
+        {"delete_font",             delete_font},
+        {"create_text",             create_text},
+        {"load_texture",            load_texture},
+        {"delete_texture",          delete_texture},
+        {"create_mesh",             create_mesh},
+        {"delete_mesh",             delete_mesh},
+        {"draw",                    draw},
+        {"set_position",            set_position},
+        {"set_scale",               set_scale},
+        {"set_rotate",              set_rotate},
+        {"create_noise",            create_noise},
+        {"get_noise",               get_noise},
+        {"delete_noise",            delete_noise},
 
         {NULL, NULL}
     };

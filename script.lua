@@ -1,7 +1,7 @@
-local engine = require "engine"
-local player = {}
-local stone  = {}
-local text   = {}
+local player      = {}
+local stone       = {}
+local text        = {}
+local framebuffer = {}
 
 function player:create()
     local o = {}
@@ -195,11 +195,26 @@ function draw_stones(window, stones, shader, texture)
     end
 end
 
+function framebuffer:create(window)
+    local o = {}
+
+    setmetatable(o, {__index = framebuffer})
+
+    o.framebuffer = engine.create_framebuffer(window)
+    o.mesh        = engine.create_mesh()
+
+    return o
+end
+
+function framebuffer:draw(window, shader)
+
+end
+
 function script()
     local window = engine.create_window("Game", 800, 500, "./img/icon.bmp")
 
     if window then
-        local framebuffer = engine.create_framebuffer(window)
+        local framebuffer = framebuffer:create       (window)
         local font        = engine.load_font         ("./cmunrm.ttf")
         local text        = text:create              (font, "Hello, world!")
         local texture     = engine.load_texture      ("./img/stone.bmp")
@@ -224,11 +239,13 @@ function script()
 
             engine.clear_color(0.5, 0.5, 1.0)
 
+            framebuffer:draw(window, shader)
+
             player:update(window, os.clock(), 0)
             player:draw  (window, shader)
             text:draw    (window, shader)
 
-            --draw_stones(window, stones, shader, texture)
+            draw_stones(window, stones, shader, texture)
 
             engine.swap_buffers(window)
             engine.poll_events ()

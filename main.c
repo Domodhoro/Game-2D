@@ -53,7 +53,7 @@ typedef struct {
 
 typedef struct {
     GLuint FBO;
-    GLuint Texture;
+    GLuint texture;
     GLuint RBO;
 } Framebuffer;
 
@@ -271,12 +271,12 @@ static int create_framebuffer(lua_State* L) {
         glGenFramebuffers(1, &(framebuffer->FBO));
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->FBO);
 
-        glGenTextures         (1, &(framebuffer->Texture));
-        glBindTexture         (GL_TEXTURE_2D, framebuffer->Texture);
+        glGenTextures         (1, &(framebuffer->texture));
+        glBindTexture         (GL_TEXTURE_2D, framebuffer->texture);
         glTexImage2D          (GL_TEXTURE_2D, 0, GL_RGB, window->width, window->height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
         glTexParameteri       (GL_TEXTURE_2D,  GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri       (GL_TEXTURE_2D,  GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer->Texture, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer->texture, 0);
 
         glGenRenderbuffers       (1, &(framebuffer->RBO));
         glBindRenderbuffer       (GL_RENDERBUFFER, framebuffer->RBO);
@@ -303,7 +303,7 @@ static int delete_framebuffer(lua_State* L) {
 
     if (framebuffer != NULL) {
         glDeleteRenderbuffers(1, &(framebuffer->RBO));
-        glDeleteTextures     (1, &(framebuffer->Texture));
+        glDeleteTextures     (1, &(framebuffer->texture));
         glDeleteFramebuffers (1, &(framebuffer->FBO));
         free                 (framebuffer);
     }
@@ -426,14 +426,14 @@ static int create_text(lua_State* L) {
             x        += roundf(kern * scale);
         }
 
-        GLuint* texture = malloc(sizeof(GLuint));
+        GLuint* font_texture = malloc(sizeof(GLuint));
 
-        glGenTextures  (1, texture);
-        glBindTexture  (GL_TEXTURE_2D, *texture);
+        glGenTextures  (1, font_texture);
+        glBindTexture  (GL_TEXTURE_2D, *font_texture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        unsigned char* inverted_bitmap = malloc(width * height * sizeof(unsigned char));
+        GLubyte* inverted_bitmap = malloc(width * height * sizeof(unsigned char));
 
         int row = 0;
         int col = 0;
@@ -447,7 +447,7 @@ static int create_text(lua_State* L) {
         glTexImage2D         (GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, inverted_bitmap);
         free                 (inverted_bitmap);
         free                 (bitmap);
-        lua_pushlightuserdata(L, texture);
+        lua_pushlightuserdata(L, font_texture);
 
         return 1;
     } else {

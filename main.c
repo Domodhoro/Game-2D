@@ -68,6 +68,8 @@ static int delay                  (lua_State*);
 static int get_key                (lua_State*);
 static int create_framebuffer     (lua_State*);
 static int delete_framebuffer     (lua_State*);
+static int enable_framebuffer     (lua_State*);
+static int disable_framebuffer    (lua_State*);
 static int create_shader          (lua_State*);
 static int delete_shader          (lua_State*);
 static int load_font              (lua_State*);
@@ -84,7 +86,6 @@ static int set_rotate             (lua_State*);
 static int create_noise           (lua_State*);
 static int get_noise              (lua_State*);
 static int delete_noise           (lua_State*);
-static int bind_framebuffer       (lua_State*);
 static int engine                 (lua_State*);
 GLvoid     set_window_icon        (GLFWwindow*, const char*);
 char*      read_file              (const char*);
@@ -110,6 +111,8 @@ static const luaL_Reg functions[] = {
     {"get_key",                 get_key},
     {"create_framebuffer",      create_framebuffer},
     {"delete_framebuffer",      delete_framebuffer},
+    {"enable_framebuffer",      enable_framebuffer},
+    {"disable_framebuffer",     disable_framebuffer},
     {"create_shader",           create_shader},
     {"delete_shader",           delete_shader},
     {"load_font",               load_font},
@@ -126,7 +129,6 @@ static const luaL_Reg functions[] = {
     {"create_noise",            create_noise},
     {"get_noise",               get_noise},
     {"delete_noise",            delete_noise},
-    {"bind_framebuffer",        bind_framebuffer},
 
     {NULL, NULL}
 };
@@ -340,6 +342,32 @@ static int delete_framebuffer(lua_State* L) {
         glDeleteTextures     (1, &(framebuffer->texture));
         glDeleteFramebuffers (1, &(framebuffer->FBO));
         free                 (framebuffer);
+    }
+
+    return 0;
+}
+
+static int enable_framebuffer(lua_State* L) {
+    Framebuffer* framebuffer = lua_touserdata(L, 1);
+
+    if (framebuffer != NULL) {
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->FBO);
+        glEnable         (GL_DEPTH_TEST);
+        glClear          (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor     (0.0f, 0.0f, 0.0f, 1.0f);
+    }
+
+    return 0;
+}
+
+static int disable_framebuffer(lua_State* L) {
+    Framebuffer* framebuffer = lua_touserdata(L, 1);
+
+    if (framebuffer != NULL) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0u);
+        glDisable        (GL_DEPTH_TEST);
+        glClearColor     (1.0f, 1.0f, 1.0f, 1.0f);
+        glClear          (GL_COLOR_BUFFER_BIT);
     }
 
     return 0;
@@ -681,17 +709,6 @@ static int delete_noise(lua_State* L) {
 
     if (noise != NULL) free(noise);
 
-    return 0;
-}
-
-static int bind_framebuffer(lua_State*) {
-    Framebuffer* framebuffer = lua_touserdata(L, 1);
-
-    if (framebuffer != NULL) {
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-        glEnable         (GL_DEPTH_TEST);
-    }
-    
     return 0;
 }
 

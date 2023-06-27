@@ -178,9 +178,9 @@ function create_stones()
         for j = -3, 3 do
             local new_stone = stone:create()
 
-            new_stone:set_position(i * 0.25, j * 0.25, -0.1)
             new_stone:set_scale   (0.25, 0.25)
             new_stone:set_rotate  (0.0)
+            new_stone:set_position(i * 0.25, j * 0.25, -0.1)
 
             table.insert(stones, new_stone)
         end
@@ -201,13 +201,17 @@ function framebuffer:create(window)
     setmetatable(o, {__index = framebuffer})
 
     o.framebuffer = engine.create_framebuffer(window)
-    o.mesh        = engine.create_mesh()
+    o.mesh        = engine.create_mesh       ()
+
+    engine.set_scale   (o.mesh, 1.0, 1.0)
+    engine.set_rotate  (o.mesh, 0.0)
+    engine.set_position(o.mesh, 0.0, 0.0, 0.0)
 
     return o
 end
 
 function framebuffer:draw(window, shader)
-
+    engine.draw(self.mesh, window, shader, self.framebuffer, 0.0, 0.0, 1.0, 1.0)
 end
 
 function script()
@@ -238,14 +242,17 @@ function script()
             end
 
             engine.clear_color(0.5, 0.5, 1.0)
-
-            framebuffer:draw(window, shader)
+            --engine.enable_framebuffer(framebuffer)
 
             player:update(window, os.clock(), 0)
             player:draw  (window, shader)
             text:draw    (window, shader)
 
             draw_stones(window, stones, shader, texture)
+
+            --engine.disable_framebuffer(framebuffer)
+
+            framebuffer:draw(window, shader)
 
             engine.swap_buffers(window)
             engine.poll_events ()

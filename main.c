@@ -97,6 +97,38 @@ GLvoid     scale                  (Mat4*, GLfloat, GLfloat, GLfloat);
 GLvoid     rotate                 (Mat4*, GLfloat);
 GLvoid     translate              (Mat4*, GLfloat, GLfloat, GLfloat);
 
+static const luaL_Reg functions[] = {
+    {"create_window",           create_window},
+    {"delete_window",           delete_window},
+    {"window_should_close",     window_should_close},
+    {"set_window_should_close", set_window_should_close},
+    {"clear_color",             clear_color},
+    {"swap_buffers",            swap_buffers},
+    {"poll_events",             poll_events},
+    {"delay",                   delay},
+    {"get_key",                 get_key},
+    {"create_framebuffer",      create_framebuffer},
+    {"delete_framebuffer",      delete_framebuffer},
+    {"create_shader",           create_shader},
+    {"delete_shader",           delete_shader},
+    {"load_font",               load_font},
+    {"delete_font",             delete_font},
+    {"create_text",             create_text},
+    {"load_texture",            load_texture},
+    {"delete_texture",          delete_texture},
+    {"create_mesh",             create_mesh},
+    {"delete_mesh",             delete_mesh},
+    {"draw",                    draw},
+    {"set_position",            set_position},
+    {"set_scale",               set_scale},
+    {"set_rotate",              set_rotate},
+    {"create_noise",            create_noise},
+    {"get_noise",               get_noise},
+    {"delete_noise",            delete_noise},
+
+    {NULL, NULL}
+};
+
 int main(int argc, char* argv[]) {
     puts(argv[0]);
 
@@ -651,38 +683,6 @@ static int delete_noise(lua_State* L) {
 }
 
 static int engine(lua_State* L) {
-    const luaL_Reg functions[] = {
-        {"create_window",           create_window},
-        {"delete_window",           delete_window},
-        {"window_should_close",     window_should_close},
-        {"set_window_should_close", set_window_should_close},
-        {"clear_color",             clear_color},
-        {"swap_buffers",            swap_buffers},
-        {"poll_events",             poll_events},
-        {"delay",                   delay},
-        {"get_key",                 get_key},
-        {"create_framebuffer",      create_framebuffer},
-        {"delete_framebuffer",      delete_framebuffer},
-        {"create_shader",           create_shader},
-        {"delete_shader",           delete_shader},
-        {"load_font",               load_font},
-        {"delete_font",             delete_font},
-        {"create_text",             create_text},
-        {"load_texture",            load_texture},
-        {"delete_texture",          delete_texture},
-        {"create_mesh",             create_mesh},
-        {"delete_mesh",             delete_mesh},
-        {"draw",                    draw},
-        {"set_position",            set_position},
-        {"set_scale",               set_scale},
-        {"set_rotate",              set_rotate},
-        {"create_noise",            create_noise},
-        {"get_noise",               get_noise},
-        {"delete_noise",            delete_noise},
-
-        {NULL, NULL}
-    };
-
     luaL_newlib(L, functions);
 
     return 1;

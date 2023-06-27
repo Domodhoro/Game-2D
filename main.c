@@ -84,6 +84,7 @@ static int set_rotate             (lua_State*);
 static int create_noise           (lua_State*);
 static int get_noise              (lua_State*);
 static int delete_noise           (lua_State*);
+static int bind_framebuffer       (lua_State*);
 static int engine                 (lua_State*);
 GLvoid     set_window_icon        (GLFWwindow*, const char*);
 char*      read_file              (const char*);
@@ -125,6 +126,7 @@ static const luaL_Reg functions[] = {
     {"create_noise",            create_noise},
     {"get_noise",               get_noise},
     {"delete_noise",            delete_noise},
+    {"bind_framebuffer",        bind_framebuffer},
 
     {NULL, NULL}
 };
@@ -679,6 +681,17 @@ static int delete_noise(lua_State* L) {
 
     if (noise != NULL) free(noise);
 
+    return 0;
+}
+
+static int bind_framebuffer(lua_State*) {
+    Framebuffer* framebuffer = lua_touserdata(L, 1);
+
+    if (framebuffer != NULL) {
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        glEnable         (GL_DEPTH_TEST);
+    }
+    
     return 0;
 }
 

@@ -70,6 +70,7 @@ static int create_framebuffer     (lua_State*);
 static int delete_framebuffer     (lua_State*);
 static int enable_framebuffer     (lua_State*);
 static int disable_framebuffer    (lua_State*);
+static int use_framebuffer        (lua_State*);
 static int create_shader          (lua_State*);
 static int delete_shader          (lua_State*);
 static int load_font              (lua_State*);
@@ -113,6 +114,7 @@ static const luaL_Reg functions[] = {
     {"delete_framebuffer",      delete_framebuffer},
     {"enable_framebuffer",      enable_framebuffer},
     {"disable_framebuffer",     disable_framebuffer},
+    {"use_framebuffer",         use_framebuffer},
     {"create_shader",           create_shader},
     {"delete_shader",           delete_shader},
     {"load_font",               load_font},
@@ -323,7 +325,7 @@ static int create_framebuffer(lua_State* L) {
             printf("Error (%s): Framebuffer is not complete.\n", __func__);
         }
 
-        glBindFramebuffer    (GL_FRAMEBUFFER, 0);
+        glBindFramebuffer    (GL_FRAMEBUFFER, 0u);
         lua_pushlightuserdata(L, framebuffer);
 
         return 1;
@@ -354,7 +356,7 @@ static int enable_framebuffer(lua_State* L) {
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->FBO);
         glEnable         (GL_DEPTH_TEST);
         glClear          (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor     (0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor     (1.0f, 1.0f, 1.0f, 1.0f);
     }
 
     return 0;
@@ -366,11 +368,23 @@ static int disable_framebuffer(lua_State* L) {
     if (framebuffer != NULL) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0u);
         glDisable        (GL_DEPTH_TEST);
-        glClearColor     (1.0f, 1.0f, 1.0f, 1.0f);
+        glClearColor     (0.0f, 0.0f, 0.0f, 1.0f);
         glClear          (GL_COLOR_BUFFER_BIT);
     }
 
     return 0;
+}
+
+static int use_framebuffer(lua_State* L) {
+    Framebuffer* framebuffer = lua_touserdata(L, 1);
+
+    if (framebuffer != NULL) {
+        lua_pushlightuserdata(L, &(framebuffer->texture));
+
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 static int create_shader(lua_State* L) {

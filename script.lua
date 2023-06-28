@@ -195,30 +195,17 @@ function draw_stones(window, stones, shader, texture)
     end
 end
 
-function framebuffer:create(window)
-    local o = {}
-
-    setmetatable(o, {__index = framebuffer})
-
-    o.framebuffer = engine.create_framebuffer(window)
-    o.mesh        = engine.create_mesh       ()
-
-    engine.set_scale   (o.mesh, 1.0, 1.0)
-    engine.set_rotate  (o.mesh, 0.0)
-    engine.set_position(o.mesh, 0.0, 0.0, 0.0)
-
-    return o
-end
-
-function framebuffer:draw(window, shader)
-    engine.draw(self.mesh, window, shader, self.framebuffer, 0.0, 0.0, 1.0, 1.0)
-end
-
 function script()
     local window = engine.create_window("Game", 800, 500, "./img/icon.bmp")
 
     if window then
-        local framebuffer = framebuffer:create       (window)
+        local framebuffer      = engine.create_framebuffer(window)
+        local framebuffer_mesh = engine.create_mesh       ()
+
+        engine.set_scale   (framebuffer_mesh, 1.5, 1.5)
+        engine.set_rotate  (framebuffer_mesh, 45.0)
+        engine.set_position(framebuffer_mesh, 0.0, 0.0, 0.0)
+
         local font        = engine.load_font         ("./cmunrm.ttf")
         local text        = text:create              (font, "Hello, world!")
         local texture     = engine.load_texture      ("./img/stone.bmp")
@@ -241,8 +228,9 @@ function script()
                 engine.set_window_should_close(window)
             end
 
-            engine.clear_color(0.5, 0.5, 1.0)
-            --engine.enable_framebuffer(framebuffer)
+            --engine.clear_color(0.5, 0.5, 1.0)
+
+            engine.enable_framebuffer(framebuffer)
 
             player:update(window, os.clock(), 0)
             player:draw  (window, shader)
@@ -250,9 +238,9 @@ function script()
 
             draw_stones(window, stones, shader, texture)
 
-            --engine.disable_framebuffer(framebuffer)
+            engine.disable_framebuffer(framebuffer)
 
-            framebuffer:draw(window, shader)
+            engine.draw(framebuffer_mesh, window, shader, engine.use_framebuffer(framebuffer), 0.0, 0.0, 1.0, 1.0)
 
             engine.swap_buffers(window)
             engine.poll_events ()

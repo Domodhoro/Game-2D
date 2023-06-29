@@ -312,14 +312,14 @@ static int create_framebuffer(lua_State* L) {
         glGenTextures         (1, &(framebuffer->texture));
         glBindTexture         (GL_TEXTURE_2D, framebuffer->texture);
         glTexImage2D          (GL_TEXTURE_2D, 0, GL_RGB, window->width, window->height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri       (GL_TEXTURE_2D,  GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri       (GL_TEXTURE_2D,  GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri       (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri       (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer->texture, 0);
 
         glGenRenderbuffers       (1, &(framebuffer->RBO));
         glBindRenderbuffer       (GL_RENDERBUFFER, framebuffer->RBO);
         glRenderbufferStorage    (GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window->width, window->height);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER,  GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, framebuffer->RBO);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, framebuffer->RBO);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             printf("Error (%s): Framebuffer is not complete.\n", __func__);
@@ -363,12 +363,15 @@ static int enable_framebuffer(lua_State* L) {
 }
 
 static int disable_framebuffer(lua_State* L) {
-    Framebuffer* framebuffer = lua_touserdata(L, 1);
+    Framebuffer* framebuffer = lua_touserdata        (L, 1);
+    const GLclampf red       = (GLclampf)lua_tonumber(L, 2);
+    const GLclampf green     = (GLclampf)lua_tonumber(L, 3);
+    const GLclampf blue      = (GLclampf)lua_tonumber(L, 4);
 
     if (framebuffer != NULL) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0u);
         glDisable        (GL_DEPTH_TEST);
-        glClearColor     (0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor     (red, green, blue, 1.0f);
         glClear          (GL_COLOR_BUFFER_BIT);
     }
 
@@ -583,6 +586,13 @@ static int create_mesh(lua_State* L) {
     Mesh* mesh = malloc(sizeof(Mesh));
 
     if (mesh != NULL) {
+        mesh->scale.v[0]        = 1.0f;
+        mesh->scale.v[1]        = 1.0f;
+        mesh->angle_of_rotation = 0.0f;
+        mesh->position.v[0]     = 0.0f;
+        mesh->position.v[1]     = 0.0f;
+        mesh->position.v[2]     = 0.0f;
+
         glGenVertexArrays    (1, &(mesh->VAO));
         glGenBuffers         (1, &(mesh->VBO));
         glGenBuffers         (1, &(mesh->EBO));
@@ -827,20 +837,20 @@ GLvoid setup_VBO(GLuint* VBO) {
     GLfloat* vertice = malloc(4 * 4 * sizeof(GLfloat));
 
     if (vertice != NULL) {
-        vertice[ 0] = -0.5f;
-        vertice[ 1] =  0.5f;
+        vertice[ 0] = -1.0f;
+        vertice[ 1] =  1.0f;
         vertice[ 2] =  0.0f;
         vertice[ 3] =  1.0f;
-        vertice[ 4] = -0.5f;
-        vertice[ 5] = -0.5f;
+        vertice[ 4] = -1.0f;
+        vertice[ 5] = -1.0f;
         vertice[ 6] =  0.0f;
         vertice[ 7] =  0.0f;
-        vertice[ 8] =  0.5f;
-        vertice[ 9] = -0.5f;
+        vertice[ 8] =  1.0f;
+        vertice[ 9] = -1.0f;
         vertice[10] =  1.0f;
         vertice[11] =  0.0f;
-        vertice[12] =  0.5f;
-        vertice[13] =  0.5f;
+        vertice[12] =  1.0f;
+        vertice[13] =  1.0f;
         vertice[14] =  1.0f;
         vertice[15] =  1.0f;
 

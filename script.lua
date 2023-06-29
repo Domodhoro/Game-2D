@@ -103,10 +103,6 @@ function text:create(font, message)
     o.mesh = engine.create_mesh()
     o.text = engine.create_text(font, message)
 
-    engine.set_scale   (o.mesh, 1.0, 0.25)
-    engine.set_rotate  (o.mesh, 0.0)
-    engine.set_position(o.mesh, 0.0, 0.0, 0.0)
-
     return o
 end
 
@@ -117,6 +113,10 @@ end
 
 function text:set_position(x, y, z)
     engine.set_position(self.mesh, x, y, z)
+end
+
+function text:set_scale(w, h)
+    engine.set_scale(self.mesh, w, h)
 end
 
 function text:draw(window, shader)
@@ -174,13 +174,13 @@ end
 function create_stones()
     local stones = {}
 
-    for i = -5, 5 do
-        for j = -3, 3 do
+    for i = -7, 7 do
+        for j = -4, 4 do
             local new_stone = stone:create()
 
-            new_stone:set_scale   (0.25, 0.25)
+            new_stone:set_scale   (0.1, 0.1)
             new_stone:set_rotate  (0.0)
-            new_stone:set_position(i * 0.25, j * 0.25, -0.1)
+            new_stone:set_position(i * 0.2, j * 0.2, -0.1)
 
             table.insert(stones, new_stone)
         end
@@ -196,26 +196,27 @@ function draw_stones(window, stones, shader, texture)
 end
 
 function script()
-    local window = engine.create_window("Game", 800, 500, "./img/icon.bmp")
+    local width  = 800
+    local height = 500
+    local window = engine.create_window("Game", width, height, "./img/icon.bmp")
 
     if window then
         local framebuffer      = engine.create_framebuffer(window)
         local framebuffer_mesh = engine.create_mesh       ()
 
-        engine.set_scale   (framebuffer_mesh, 1.5, 1.5)
-        engine.set_rotate  (framebuffer_mesh, 45.0)
-        engine.set_position(framebuffer_mesh, 0.0, 0.0, 0.0)
+        engine.set_scale(framebuffer_mesh, width / height, 1.0)
 
-        local font        = engine.load_font         ("./cmunrm.ttf")
-        local text        = text:create              (font, "Hello, world!")
-        local texture     = engine.load_texture      ("./img/stone.bmp")
-        local stones      = create_stones            ()
-        local player      = player:create            ()
-        local shader      = engine.create_shader     ("./glsl/vertex_shader.glsl", "./glsl/fragment_shader.glsl")
-        local FPS         = 60
+        local font    = engine.load_font    ("./cmunrm.ttf")
+        local text    = text:create         (font, "Hello, world!")
+        local texture = engine.load_texture ("./img/stone.bmp")
+        local stones  = create_stones       ()
+        local player  = player:create       ()
+        local shader  = engine.create_shader("./glsl/vertex_shader.glsl", "./glsl/fragment_shader.glsl")
+        local FPS     = 60
 
-        text:set_position         (-0.75, 0.5, -0.1)
-        player:set_scale          (0.25, 0.25)
+        text:set_position         (-1.0, 0.4, -0.1)
+        text:set_scale            (0.5, 0.2)
+        player:set_scale          (0.1, 0.1)
         player:set_position       (0.0, 0.0, 0.0)
         player:set_rotate         (0.0)
         player:set_speed          (0.01)
@@ -228,8 +229,6 @@ function script()
                 engine.set_window_should_close(window)
             end
 
-            --engine.clear_color(0.5, 0.5, 1.0)
-
             engine.enable_framebuffer(framebuffer)
 
             player:update(window, os.clock(), 0)
@@ -238,9 +237,8 @@ function script()
 
             draw_stones(window, stones, shader, texture)
 
-            engine.disable_framebuffer(framebuffer)
-
-            engine.draw(framebuffer_mesh, window, shader, engine.use_framebuffer(framebuffer), 0.0, 0.0, 1.0, 1.0)
+            engine.disable_framebuffer(framebuffer, 0.5, 0.5, 1.0)
+            engine.draw               (framebuffer_mesh, window, shader, engine.use_framebuffer(framebuffer), 0.0, 0.0, 1.0, 1.0)
 
             engine.swap_buffers(window)
             engine.poll_events ()

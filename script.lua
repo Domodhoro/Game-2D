@@ -251,7 +251,7 @@ function script()
 
         delete_stones            (stones)
         player:delete            ()
-        text:delete              (window, shader)
+        text:delete              ()
         engine.delete_shader     (shader)
         engine.delete_framebuffer(framebuffer)
         engine.delete_window     (window)

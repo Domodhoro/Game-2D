@@ -196,31 +196,36 @@ function draw_stones(window, stones, shader, texture)
 end
 
 function script()
-    local width  = 800
-    local height = 500
-    local window = engine.create_window("Game", width, height, "./img/icon.bmp")
+    local window_width  = 800
+    local window_height = 500
+    local window        = engine.create_window("Game", window_width, window_height, "./img/icon.bmp")
 
     if window then
         local framebuffer      = engine.create_framebuffer(window)
         local framebuffer_mesh = engine.create_mesh       ()
 
-        engine.set_scale(framebuffer_mesh, width / height, 1.0)
+        engine.set_scale(framebuffer_mesh, window_width / window_height, 1.0)
 
-        local font    = engine.load_font    ("./cmunrm.ttf")
-        local text    = text:create         (font, "Hello, world!")
-        local texture = engine.load_texture ("./img/stone.bmp")
-        local stones  = create_stones       ()
-        local player  = player:create       ()
-        local shader  = engine.create_shader("./glsl/vertex_shader.glsl", "./glsl/fragment_shader.glsl")
-        local FPS     = 60
+        local font = engine.load_font("./cmunrm.ttf")
+        local text = text:create     (font, "Hello, world!")
 
-        text:set_position         (-1.0, 0.4, -0.1)
-        text:set_scale            (0.5, 0.2)
+        text:set_position(-1.0, 0.7, -0.1)
+        text:set_scale   (0.5, 0.2)
+
+        local stones  = create_stones()
+        local player  = player:create()
+
         player:set_scale          (0.1, 0.1)
         player:set_position       (0.0, 0.0, 0.0)
         player:set_rotate         (0.0)
         player:set_speed          (0.01)
         player:set_animation_speed(8.0)
+
+        local texture            = engine.load_texture ("./img/stone.bmp")
+        local shader             = engine.create_shader("./glsl/vertex_shader.glsl", "./glsl/fragment_shader.glsl")
+        local framebuffer_shader = engine.create_shader("./glsl/framebuffer_vertex_shader.glsl", "./glsl/framebuffer_fragment_shader.glsl")
+
+        local FPS = 60
 
         while not engine.window_should_close(window) do
             local frame_start_time = os.clock()
@@ -238,7 +243,7 @@ function script()
             draw_stones(window, stones, shader, texture)
 
             engine.disable_framebuffer(framebuffer, 0.5, 0.5, 1.0)
-            engine.draw               (framebuffer_mesh, window, shader, engine.use_framebuffer(framebuffer), 0.0, 0.0, 1.0, 1.0)
+            engine.draw               (framebuffer_mesh, window, framebuffer_shader, engine.use_framebuffer(framebuffer), 0.0, 0.0, 1.0, 1.0)
 
             engine.swap_buffers(window)
             engine.poll_events ()
@@ -249,10 +254,14 @@ function script()
             if wait_time > 0 then engine.delay(wait_time) end
         end
 
-        delete_stones            (stones)
-        player:delete            ()
-        text:delete              ()
+        text:delete  ()
+        player:delete()
+
+        delete_stones(stones)
+
+        engine.delete_texture    (texture)
         engine.delete_shader     (shader)
+        engine.delete_shader     (framebuffer_shader)
         engine.delete_framebuffer(framebuffer)
         engine.delete_window     (window)
     end

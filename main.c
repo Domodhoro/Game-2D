@@ -136,7 +136,11 @@ static const luaL_Reg functions[] = {
 };
 
 int main(int argc, char* argv[]) {
-    puts(argv[0]);
+#ifdef __linux__
+    puts("Linux");
+#elif _WIN32
+    puts("Windows");
+#endif
 
     lua_State* L = luaL_newstate();
 

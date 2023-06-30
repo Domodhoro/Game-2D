@@ -136,11 +136,13 @@ static const luaL_Reg functions[] = {
 };
 
 int main(int argc, char* argv[]) {
+/*
 #ifdef __linux__
     puts("Linux");
 #elif _WIN32
     puts("Windows");
 #endif
+*/
 
     lua_State* L = luaL_newstate();
 
@@ -465,15 +467,15 @@ static int delete_font(lua_State* L) {
 }
 
 static int create_text(lua_State* L) {
-    unsigned char* font = lua_touserdata  (L, 1);
-    const char*    word = luaL_checkstring(L, 2);
+    unsigned char* font   = lua_touserdata   (L, 1);
+    const char*    word   = luaL_checkstring (L, 2);
+    const int      width  = luaL_checkinteger(L, 3);
+    const int      height = luaL_checkinteger(L, 4);
+    const int      length = luaL_checkinteger(L, 5);
 
     stbtt_fontinfo info;
 
     if (stbtt_InitFont(&info, font, 0)) {
-        const int      width     = 512;
-        const int      height    = 64;
-        const int      length    = 64;
         unsigned char* bitmap    = calloc                   (width * height, sizeof(unsigned char));
         const float    scale     = stbtt_ScaleForPixelHeight(&info, length);
         int            ascent    = 0;

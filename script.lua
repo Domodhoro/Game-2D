@@ -101,7 +101,7 @@ function text:create(font, message)
     setmetatable(o, {__index = text})
 
     o.mesh = engine.create_mesh()
-    o.text = engine.create_text(font, message)
+    o.text = engine.create_text(font, message, 512, 64, 64)
 
     return o
 end
@@ -222,8 +222,9 @@ function script()
         player:set_animation_speed(8.0)
 
         local texture            = engine.load_texture ("./img/stone.bmp")
-        local shader             = engine.create_shader("./glsl/vertex_shader.glsl", "./glsl/fragment_shader.glsl")
-        local framebuffer_shader = engine.create_shader("./glsl/framebuffer_vertex_shader.glsl", "./glsl/framebuffer_fragment_shader.glsl")
+        local shader             = engine.create_shader("./glsl/vertex.glsl", "./glsl/fragment.glsl")
+        local font_shader        = engine.create_shader("./glsl/font_vertex.glsl", "./glsl/font_fragment.glsl")
+        local framebuffer_shader = engine.create_shader("./glsl/framebuffer_vertex.glsl", "./glsl/framebuffer_fragment.glsl")
 
         local FPS = 60
 
@@ -238,9 +239,9 @@ function script()
 
             player:update(window, os.clock(), 0)
             player:draw  (window, shader)
-            text:draw    (window, shader)
+            text:draw    (window, font_shader)
 
-            draw_stones(window, stones, shader, texture)
+            --draw_stones(window, stones, shader, texture)
 
             engine.disable_framebuffer(framebuffer, 0.5, 0.5, 1.0)
             engine.draw               (framebuffer_mesh, window, framebuffer_shader, engine.use_framebuffer(framebuffer), 0.0, 0.0, 1.0, 1.0)
@@ -261,6 +262,7 @@ function script()
 
         engine.delete_texture    (texture)
         engine.delete_shader     (shader)
+        engine.delete_shader     (font_shader)
         engine.delete_shader     (framebuffer_shader)
         engine.delete_framebuffer(framebuffer)
         engine.delete_window     (window)

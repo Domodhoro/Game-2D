@@ -369,10 +369,10 @@ static int enable_framebuffer(lua_State* L) {
 }
 
 static int disable_framebuffer(lua_State* L) {
-    Framebuffer* framebuffer = lua_touserdata        (L, 1);
-    const GLclampf red       = (GLclampf)lua_tonumber(L, 2);
-    const GLclampf green     = (GLclampf)lua_tonumber(L, 3);
-    const GLclampf blue      = (GLclampf)lua_tonumber(L, 4);
+    Framebuffer*   framebuffer = lua_touserdata        (L, 1);
+    const GLclampf red         = (GLclampf)lua_tonumber(L, 2);
+    const GLclampf green       = (GLclampf)lua_tonumber(L, 3);
+    const GLclampf blue        = (GLclampf)lua_tonumber(L, 4);
 
     if (framebuffer != NULL) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0u);
@@ -473,17 +473,17 @@ static int create_text(lua_State* L) {
     stbtt_fontinfo info;
 
     if (stbtt_InitFont(&info, font, 0)) {
-        const int      width     = 512;
-        const int      height    = 64;
-        const int      length    = 64;
-        unsigned char* bitmap    = malloc                   (width * height * sizeof(unsigned char));
-        const float    scale     = stbtt_ScaleForPixelHeight(&info, length);
-        int            ascent    = 0;
-        int            descent   = 0;
-        int            line_gap  = 0;
-        int            x         = 0;
-        int            y         = 0;
-        int            i         = 0;
+        const int      width    = 512;
+        const int      height   = 64;
+        const int      length   = 64;
+        unsigned char* bitmap   = malloc                   (width * height * sizeof(unsigned char));
+        const float    scale    = stbtt_ScaleForPixelHeight(&info, length);
+        int            ascent   = 0;
+        int            descent  = 0;
+        int            line_gap = 0;
+        int            x        = 0;
+        int            y        = 0;
+        int            i        = 0;
 
         stbtt_GetFontVMetrics(&info, &ascent, &descent, &line_gap);
 
@@ -627,14 +627,14 @@ static int delete_mesh(lua_State* L) {
 }
 
 static int draw(lua_State* L) {
-    Mesh*         mesh     = lua_touserdata           (L, 1);
-    Window*       window   = lua_touserdata           (L, 2);
-    GLuint*       shader   = lua_touserdata           (L, 3);
-    GLuint*       texture  = lua_touserdata           (L, 4);
-    const GLfloat u        = (GLfloat)luaL_checknumber(L, 5);
-    const GLfloat v        = (GLfloat)luaL_checknumber(L, 6);
-    const GLfloat du       = (GLfloat)luaL_checknumber(L, 7);
-    const GLfloat dv       = (GLfloat)luaL_checknumber(L, 8);
+    Mesh*         mesh    = lua_touserdata           (L, 1);
+    Window*       window  = lua_touserdata           (L, 2);
+    GLuint*       shader  = lua_touserdata           (L, 3);
+    GLuint*       texture = lua_touserdata           (L, 4);
+    const GLfloat u       = (GLfloat)luaL_checknumber(L, 5);
+    const GLfloat v       = (GLfloat)luaL_checknumber(L, 6);
+    const GLfloat du      = (GLfloat)luaL_checknumber(L, 7);
+    const GLfloat dv      = (GLfloat)luaL_checknumber(L, 8);
 
     Vec4 TexCoords = {
         .v = {

@@ -237,9 +237,9 @@ function script()
 
             player:update(window, os.clock(), 0)
             player:draw  (window, shader)
-            text:draw    (window, shader)
+            --text:draw    (window, shader)
 
-            draw_stones(window, stones, shader, texture)
+            --draw_stones(window, stones, shader, texture)
 
             engine.disable_framebuffer(framebuffer, 0.5, 0.5, 1.0)
             engine.draw               (framebuffer_mesh, window, shader, engine.use_framebuffer(framebuffer), 0.0, 0.0, 1.0, 1.0)

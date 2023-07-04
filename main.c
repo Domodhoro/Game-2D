@@ -166,7 +166,6 @@ int main(int argc, char* argv[]) {
     if (luaL_dofile(L, "./script.lua") == LUA_OK) {
         lua_getglobal(L, "script");
         lua_pcall    (L, 0, 0, 0);
-        //lua_cpcall    (L, 0, 0, 0); ??????
         lua_close    (L);
 
         return EXIT_SUCCESS;

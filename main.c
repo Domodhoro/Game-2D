@@ -31,6 +31,12 @@ typedef struct {
 } Window;
 
 typedef struct {
+    GLuint FBO;
+    GLuint texture;
+    GLuint RBO;
+} Framebuffer;
+
+typedef struct {
     GLfloat v[2];
 } Vec2;
 
@@ -41,6 +47,14 @@ typedef struct {
 typedef struct {
     GLfloat v[4];
 } Vec4;
+
+typedef struct {
+    GLfloat m[2][2];
+} Mat2;
+
+typedef struct {
+    GLfloat m[3][3];
+} Mat3;
 
 typedef struct {
     GLfloat m[4][4];
@@ -54,12 +68,6 @@ typedef struct {
     Vec2    scale;
     GLfloat angle_of_rotation;
 } Mesh;
-
-typedef struct {
-    GLuint FBO;
-    GLuint texture;
-    GLuint RBO;
-} Framebuffer;
 
 static int create_window          (lua_State*);
 static int delete_window          (lua_State*);
@@ -90,17 +98,6 @@ static int create_noise           (lua_State*);
 static int get_noise              (lua_State*);
 static int delete_noise           (lua_State*);
 static int engine                 (lua_State*);
-GLvoid     set_window_icon        (GLFWwindow*, const char*);
-char*      read_file              (const char*);
-GLuint     compile_vertex_shader  (const GLchar*);
-GLuint     compile_fragment_shader(const GLchar*);
-GLvoid     setup_VBO              (GLuint*);
-GLvoid     setup_EBO              (GLuint*);
-Mat4       ortho                  (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-GLvoid     identity               (Mat4*);
-GLvoid     scale                  (Mat4*, GLfloat, GLfloat, GLfloat);
-GLvoid     rotate                 (Mat4*, GLfloat);
-GLvoid     translate              (Mat4*, GLfloat, GLfloat, GLfloat);
 
 static const luaL_Reg functions[] = {
     {"create_window",           create_window},
@@ -135,6 +132,18 @@ static const luaL_Reg functions[] = {
     {NULL, NULL}
 };
 
+GLvoid set_window_icon        (GLFWwindow*, const char*);
+char*  read_file              (const char*);
+GLuint compile_vertex_shader  (const GLchar*);
+GLuint compile_fragment_shader(const GLchar*);
+GLvoid setup_VBO              (GLuint*);
+GLvoid setup_EBO              (GLuint*);
+Mat4   ortho                  (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLvoid identity               (Mat4*);
+GLvoid scale                  (Mat4*, GLfloat, GLfloat, GLfloat);
+GLvoid rotate                 (Mat4*, GLfloat);
+GLvoid translate              (Mat4*, GLfloat, GLfloat, GLfloat);
+
 int main(int argc, char* argv[]) {
     lua_State* L = luaL_newstate();
 
@@ -145,7 +154,7 @@ int main(int argc, char* argv[]) {
     GLint         key             = 0;
 
     for (key = GLFW_KEY_A; key <= GLFW_KEY_Z; key++) {
-        GLchar constant_name[9];
+        GLchar constant_name[8 + 1];
 
         snprintf       (constant_name, sizeof(constant_name), "%s%c", constant_prefix, key);
         lua_pushinteger(L, key);

@@ -7,7 +7,6 @@
 
 #define GLEW_STATIC
 #define STB_IMAGE_IMPLEMENTATION
-#define STB_TRUETYPE_IMPLEMENTATION
 #define FNL_IMPL
 
 #include <GL/glew.h>
@@ -17,7 +16,6 @@
 #include "./lua54/lualib.h"
 #include "./lua54/lauxlib.h"
 #include "./stb/stb_image.h"
-#include "./stb/stb_truetype.h"
 #include "./FastNoiseLite/FastNoiseLite.h"
 
 #ifdef __linux__
@@ -72,6 +70,7 @@ static int clear_color            (lua_State*);
 static int poll_events            (lua_State*);
 static int delay                  (lua_State*);
 static int get_key                (lua_State*);
+static int get_system_info        (lua_State*);
 static int create_framebuffer     (lua_State*);
 static int delete_framebuffer     (lua_State*);
 static int enable_framebuffer     (lua_State*);
@@ -79,9 +78,6 @@ static int disable_framebuffer    (lua_State*);
 static int use_framebuffer        (lua_State*);
 static int create_shader          (lua_State*);
 static int delete_shader          (lua_State*);
-static int load_font              (lua_State*);
-static int delete_font            (lua_State*);
-static int create_text            (lua_State*);
 static int load_texture           (lua_State*);
 static int delete_texture         (lua_State*);
 static int create_mesh            (lua_State*);
@@ -116,6 +112,7 @@ static const luaL_Reg functions[] = {
     {"poll_events",             poll_events},
     {"delay",                   delay},
     {"get_key",                 get_key},
+    {"get_system_info",         get_system_info},
     {"create_framebuffer",      create_framebuffer},
     {"delete_framebuffer",      delete_framebuffer},
     {"enable_framebuffer",      enable_framebuffer},
@@ -123,9 +120,6 @@ static const luaL_Reg functions[] = {
     {"use_framebuffer",         use_framebuffer},
     {"create_shader",           create_shader},
     {"delete_shader",           delete_shader},
-    {"load_font",               load_font},
-    {"delete_font",             delete_font},
-    {"create_text",             create_text},
     {"load_texture",            load_texture},
     {"delete_texture",          delete_texture},
     {"create_mesh",             create_mesh},
@@ -142,8 +136,6 @@ static const luaL_Reg functions[] = {
 };
 
 int main(int argc, char* argv[]) {
-    puts(OS);
-
     lua_State* L = luaL_newstate();
 
     luaL_openlibs(L);
@@ -307,6 +299,16 @@ static int get_key(lua_State* L) {
     return 0;
 }
 
+static int get_system_info(lua_State* L) {
+    printf("OS:                       %s\n", OS);
+    printf("VENDOR:                   %s\n", glGetString(GL_VENDOR));
+    printf("RENDERER:                 %s\n", glGetString(GL_RENDERER));
+    printf("VERSION:                  %s\n", glGetString(GL_VERSION));
+    printf("SHADING LANGUAGE VERSION: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+    return 0;
+}
+
 static int create_framebuffer(lua_State* L) {
     Window*      window      = lua_touserdata(L, 1);
     Framebuffer* framebuffer = malloc        (sizeof(Framebuffer));
@@ -430,116 +432,6 @@ static int delete_shader(lua_State* L) {
     }
 
     return 0;
-}
-
-static int load_font(lua_State* L) {
-    const char* font_path = luaL_checkstring(L, 1);
-    FILE*       file      = fopen           (font_path, "rb");
-
-    if (file != NULL) {
-        fseek(file, 0L, SEEK_END);
-
-        long size = ftell(file);
-
-        fseek(file, 0L, SEEK_SET);
-
-        unsigned char* font_buffer = malloc(size);
-
-        fread (font_buffer, size, 1, file);
-        fclose(file);
-
-        lua_pushlightuserdata(L, font_buffer);
-
-        return 1;
-    } else {
-        printf("Error (%s): Failed to open font file: %s.\n", __func__, font_path);
-
-        return 0;
-    }
-}
-
-static int delete_font(lua_State* L) {
-    unsigned char* font = lua_touserdata(L, 1);
-
-    if (font != NULL) free(font);
-
-    return 0;
-}
-
-static int create_text(lua_State* L) {
-    unsigned char* font = lua_touserdata  (L, 1);
-    const char*    word = luaL_checkstring(L, 2);
-
-    stbtt_fontinfo info;
-
-    if (stbtt_InitFont(&info, font, 0)) {
-        const int      width    = 512;
-        const int      height   = 64;
-        const int      length   = 64;
-        unsigned char* bitmap   = malloc                   (width * height * sizeof(unsigned char));
-        const float    scale    = stbtt_ScaleForPixelHeight(&info, length);
-        int            ascent   = 0;
-        int            descent  = 0;
-        int            line_gap = 0;
-        int            x        = 0;
-        int            y        = 0;
-        int            i        = 0;
-
-        stbtt_GetFontVMetrics(&info, &ascent, &descent, &line_gap);
-
-        ascent  = roundf(ascent  * scale);
-        descent = roundf(descent * scale);
-
-        for (i = 0; i < strlen(word); ++i) {
-            int ax   = 0;
-            int lsb  = 0;
-            int c_x1 = 0;
-            int c_y1 = 0;
-            int c_x2 = 0;
-            int c_y2 = 0;
-
-            stbtt_GetCodepointHMetrics (&info, word[i], &ax, &lsb);
-            stbtt_GetCodepointBitmapBox(&info, word[i], scale, scale, &c_x1, &c_y1, &c_x2, &c_y2);
-
-            y               = ascent + c_y1;
-            int byte_offset = x + roundf(lsb * scale) + (y * width);
-
-            stbtt_MakeCodepointBitmap(&info, bitmap + byte_offset, c_x2 - c_x1, c_y2 - c_y1, width, scale, scale, word[i]);
-
-            int kern  = stbtt_GetCodepointKernAdvance(&info, word[i], word[i + 1]);
-            x        += roundf(ax   * scale);
-            x        += roundf(kern * scale);
-        }
-
-        GLuint* font_texture = malloc(sizeof(GLuint));
-
-        glGenTextures  (1, font_texture);
-        glBindTexture  (GL_TEXTURE_2D, *font_texture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        GLubyte* inverted_bitmap = malloc(width * height * sizeof(unsigned char));
-
-        int row = 0;
-        int col = 0;
-
-        for (row = 0; row < height; ++row) {
-            for (col = 0; col < width; ++col) {
-                inverted_bitmap[(height - 1 - row) * width + col] = bitmap[row * width + col];
-            }
-        }
-
-        glTexImage2D         (GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, inverted_bitmap);
-        free                 (inverted_bitmap);
-        free                 (bitmap);
-        lua_pushlightuserdata(L, font_texture);
-
-        return 1;
-    } else {
-        printf("Error (%s): Failed to initialize font.\n", __func__);
-
-        return 0;
-    }
 }
 
 static int load_texture(lua_State* L) {

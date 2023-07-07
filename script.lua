@@ -1,7 +1,7 @@
+local framebuffer = {}
 local player      = {}
 local stone       = {}
 local text        = {}
-local framebuffer = {}
 
 function player:create()
     local o = {}
@@ -95,34 +95,6 @@ function player:draw(window, shader)
     engine.draw(self.mesh, window, shader, self.texture, u, v, du, dv)
 end
 
-function text:create(font, message)
-    local o = {}
-
-    setmetatable(o, {__index = text})
-
-    o.mesh = engine.create_mesh()
-    o.text = engine.create_text(font, message)
-
-    return o
-end
-
-function text:delete()
-    engine.delete_mesh   (self.mesh)
-    engine.delete_texture(self.text)
-end
-
-function text:set_position(x, y, z)
-    engine.set_position(self.mesh, x, y, z)
-end
-
-function text:set_scale(w, h)
-    engine.set_scale(self.mesh, w, h)
-end
-
-function text:draw(window, shader)
-    engine.draw(self.mesh, window, shader, self.text, 0.0, 0.0, 1.0, 1.0)
-end
-
 function stone:create()
     local o = {}
 
@@ -175,15 +147,13 @@ function create_stones()
     local stones = {}
 
     for i = -7, 7 do
-        for j = -4, 4 do
-            local new_stone = stone:create()
+        local new_stone = stone:create()
 
-            new_stone:set_scale   (0.1, 0.1)
-            new_stone:set_rotate  (0.0)
-            new_stone:set_position(i * 0.2, j * 0.2, -0.1)
+        new_stone:set_scale   (0.1, 0.1)
+        new_stone:set_rotate  (0.0)
+        new_stone:set_position(i * 0.2, -0.4, -0.1)
 
-            table.insert(stones, new_stone)
-        end
+        table.insert(stones, new_stone)
     end
 
     return stones
@@ -195,25 +165,49 @@ function draw_stones(window, stones, shader, texture)
     end
 end
 
+function text:create()
+    local o = {}
+
+    setmetatable(o, {__index = text})
+
+    o.mesh    = engine.create_mesh ()
+    o.texture = engine.load_texture("./img/fontmap.bmp")
+
+    o.tex_coords = {
+        u  = 0.0,
+        v  = 0.0,
+        du = 1.0,
+        dv = 1.0
+    }
+
+    return o
+end
+
+function text:delete()
+    engine.delete_texture(self.texture)
+    engine.delete_mesh   (self.mesh)
+end
+
+function text:draw(shader)
+
+end
+
 function script()
     local window_width  = 800
     local window_height = 500
     local window        = engine.create_window("Game", window_width, window_height, "./img/icon.bmp")
 
     if window then
+        engine.get_system_info()
+
         local framebuffer      = engine.create_framebuffer(window)
         local framebuffer_mesh = engine.create_mesh       ()
 
         engine.set_scale(framebuffer_mesh, window_width / window_height, 1.0)
 
-        local font = engine.load_font("./cmunrm.ttf")
-        local text = text:create     (font, "Hello, world!")
-
-        text:set_position(-1.0, 0.7, -0.1)
-        text:set_scale   (0.5, 0.2)
-
-        local stones  = create_stones()
-        local player  = player:create()
+        local player = player:create()
+        local stones = create_stones()
+        local text   = text:create  ()
 
         player:set_scale          (0.1, 0.1)
         player:set_position       (0.0, 0.0, 0.0)
@@ -235,11 +229,12 @@ function script()
 
             engine.enable_framebuffer(framebuffer)
 
+            text:draw(shader)
+
             player:update(window, os.clock(), 0)
             player:draw  (window, shader)
-            --text:draw    (window, shader)
 
-            --draw_stones(window, stones, shader, texture)
+            draw_stones(window, stones, shader, texture)
 
             engine.disable_framebuffer(framebuffer, 0.5, 0.5, 1.0)
             engine.draw               (framebuffer_mesh, window, shader, engine.use_framebuffer(framebuffer), 0.0, 0.0, 1.0, 1.0)

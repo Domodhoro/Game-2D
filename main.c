@@ -145,7 +145,7 @@ int main(int argc, char* argv[]) {
     GLint         key             = 0;
 
     for (key = GLFW_KEY_A; key <= GLFW_KEY_Z; key++) {
-        GLchar constant_name[8 + 1];
+        GLchar constant_name[9];
 
         snprintf       (constant_name, sizeof(constant_name), "%s%c", constant_prefix, key);
         lua_pushinteger(L, key);
@@ -314,16 +314,14 @@ static int create_framebuffer(lua_State* L) {
     Framebuffer* framebuffer = malloc        (sizeof(Framebuffer));
 
     if (framebuffer != NULL) {
-        glGenFramebuffers(1, &(framebuffer->FBO));
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->FBO);
-
-        glGenTextures         (1, &(framebuffer->texture));
-        glBindTexture         (GL_TEXTURE_2D, framebuffer->texture);
-        glTexImage2D          (GL_TEXTURE_2D, 0, GL_RGB, window->width, window->height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri       (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri       (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer->texture, 0);
-
+        glGenFramebuffers        (1, &(framebuffer->FBO));
+        glBindFramebuffer        (GL_FRAMEBUFFER, framebuffer->FBO);
+        glGenTextures            (1, &(framebuffer->texture));
+        glBindTexture            (GL_TEXTURE_2D, framebuffer->texture);
+        glTexImage2D             (GL_TEXTURE_2D, 0, GL_RGB, window->width, window->height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri          (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri          (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glFramebufferTexture2D   (GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer->texture, 0);
         glGenRenderbuffers       (1, &(framebuffer->RBO));
         glBindRenderbuffer       (GL_RENDERBUFFER, framebuffer->RBO);
         glRenderbufferStorage    (GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window->width, window->height);

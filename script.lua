@@ -165,20 +165,13 @@ function draw_stones(window, stones, shader, texture)
     end
 end
 
-function text:create()
+function text:create(scale)
     local o = {}
 
     setmetatable(o, {__index = text})
 
     o.mesh    = engine.create_mesh ()
     o.texture = engine.load_texture("./img/fontmap.bmp")
-
-    o.tex_coords = {
-        u  = 0.0,
-        v  = 0.0,
-        du = 1.0,
-        dv = 1.0
-    }
 
     return o
 end
@@ -188,8 +181,11 @@ function text:delete()
     engine.delete_mesh   (self.mesh)
 end
 
-function text:draw(shader)
+function text:draw(window, shader, scale, x, y, z, u, v)
+    engine.set_scale   (self.mesh, scale, scale)
+    engine.set_position(self.mesh, x, y, z)
 
+    engine.draw(self.mesh, window, shader, self.texture, u, v, 0.0625, 0.0625)
 end
 
 function script()
@@ -198,8 +194,6 @@ function script()
     local window        = engine.create_window("Game", window_width, window_height, "./img/icon.bmp")
 
     if window then
-        engine.get_system_info()
-
         local framebuffer      = engine.create_framebuffer(window)
         local framebuffer_mesh = engine.create_mesh       ()
 
@@ -229,7 +223,9 @@ function script()
 
             engine.enable_framebuffer(framebuffer)
 
-            text:draw(shader)
+            text:draw(window, shader, 0.05, -0.9, 0.5, 0.0, 0.0, 3.0)
+            text:draw(window, shader, 0.05, -0.8, 0.5, 0.0, 1.0, 3.0)
+            text:draw(window, shader, 0.05, -0.7, 0.5, 0.0, 2.0, 3.0)
 
             player:update(window, os.clock(), 0)
             player:draw  (window, shader)

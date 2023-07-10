@@ -217,15 +217,15 @@ function script()
         while not engine.window_should_close(window) do
             local frame_start_time = os.clock()
 
-            if engine.get_key(window, KEY_ESC) then
-                engine.set_window_should_close(window)
-            end
+            if engine.get_key(window, KEY_ESC) then engine.set_window_should_close(window) end
 
             engine.enable_framebuffer(framebuffer)
 
-            text:draw(window, shader, 0.05, -0.9, 0.5, 0.0, 0.0, 3.0)
-            text:draw(window, shader, 0.05, -0.8, 0.5, 0.0, 1.0, 3.0)
-            text:draw(window, shader, 0.05, -0.7, 0.5, 0.0, 2.0, 3.0)
+            text:draw(window, shader, 0.05, -1.5, 0.9, 0.0, 0.0, 3.0)
+            text:draw(window, shader, 0.05, -1.4, 0.9, 0.0, 1.0, 3.0)
+            text:draw(window, shader, 0.05, -1.3, 0.9, 0.0, 2.0, 3.0)
+            text:draw(window, shader, 0.05, -1.2, 0.9, 0.0, 3.0, 3.0)
+            text:draw(window, shader, 0.05, -1.1, 0.9, 0.0, 4.0, 3.0)
 
             player:update(window, os.clock(), 0)
             player:draw  (window, shader)

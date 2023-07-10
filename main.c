@@ -309,7 +309,7 @@ static int get_key(lua_State* L) {
 }
 
 static int get_system_info(lua_State* L) {
-    printf("OS:                       %s\n", OS);
+    printf("SYSTEM:                   %s\n", OS);
     printf("VENDOR:                   %s\n", glGetString(GL_VENDOR));
     printf("RENDERER:                 %s\n", glGetString(GL_RENDERER));
     printf("VERSION:                  %s\n", glGetString(GL_VERSION));
@@ -371,7 +371,7 @@ static int enable_framebuffer(lua_State* L) {
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->FBO);
         glEnable         (GL_DEPTH_TEST);
         glClear          (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor     (1.0f, 1.0f, 1.0f, 1.0f);
+        glClearColor     (0.0f, 1.0f, 0.0f, 1.0f);
     }
 
     return 0;
